@@ -1,0 +1,450 @@
+---
+title: Next.js App Router Explained with Examples
+date: 2024-02-15
+description: A comprehensive guide to Next.js App Router. Learn about routing, layouts, server components, and data fetching with practical examples.
+tags: ['Next.js', 'React', 'Web Development', 'Tutorial']
+excerpt: Master the Next.js App Router with this detailed guide. Understand routing, layouts, server components, and modern Next.js patterns with code examples.
+---
+
+Next.js 13+ introduced the App Router, a new routing system built on React Server Components. It represents a significant shift from the Pages Router and offers powerful new capabilities. This guide explains the App Router with practical examples.
+
+## What is the App Router?
+
+The App Router is Next.js's new file-system based routing system that uses a `app` directory instead of `pages`. It leverages React Server Components, enabling better performance and developer experience.
+
+## Key Differences from Pages Router
+
+| Feature | Pages Router | App Router |
+|---------|-------------|------------|
+| Directory | `pages/` | `app/` |
+| Layouts | Custom `_app.js` | Nested `layout.tsx` |
+| Data Fetching | `getServerSideProps`, `getStaticProps` | Async Server Components |
+| Loading States | Manual | Built-in `loading.tsx` |
+| Error Handling | `_error.js` | `error.tsx` |
+| Route Groups | No | Yes with `()` |
+
+## Project Structure
+
+```
+app/
+├── layout.tsx          # Root layout
+├── page.tsx            # Home page (/)
+├── loading.tsx         # Loading UI
+├── error.tsx           # Error UI
+├── not-found.tsx       # 404 page
+├── about/
+│   └── page.tsx        # /about
+├── blog/
+│   ├── layout.tsx      # Blog layout
+│   ├── page.tsx        # /blog
+│   └── [slug]/
+│       └── page.tsx    # /blog/[slug]
+└── (marketing)/
+    ├── layout.tsx      # Route group layout
+    └── pricing/
+        └── page.tsx    # /pricing
+```
+
+## Basic Routing
+
+### Creating Pages
+
+Pages are created using `page.tsx` files:
+
+```tsx
+// app/about/page.tsx
+export default function AboutPage() {
+  return (
+    <div>
+      <h1>About Us</h1>
+      <p>This is the about page</p>
+    </div>
+  )
+}
+```
+
+This creates a route at `/about`.
+
+### Dynamic Routes
+
+Use brackets for dynamic segments:
+
+```tsx
+// app/blog/[slug]/page.tsx
+export default function BlogPost({ params }: { params: { slug: string } }) {
+  return (
+    <div>
+      <h1>Blog Post: {params.slug}</h1>
+    </div>
+  )
+}
+```
+
+This handles routes like `/blog/my-post`.
+
+### Catch-All Routes
+
+Use `[...slug]` for catch-all routes:
+
+```tsx
+// app/docs/[...slug]/page.tsx
+export default function DocsPage({ params }: { params: { slug: string[] } }) {
+  return (
+    <div>
+      <h1>Docs: {params.slug.join('/')}</h1>
+    </div>
+  )
+}
+```
+
+This handles `/docs/a`, `/docs/a/b`, `/docs/a/b/c`, etc.
+
+## Layouts
+
+Layouts wrap pages and persist across navigation:
+
+```tsx
+// app/layout.tsx
+import './globals.css'
+
+export const metadata = {
+  title: 'My App',
+  description: 'App description',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <header>Navigation</header>
+        {children}
+        <footer>Footer</footer>
+      </body>
+    </html>
+  )
+}
+```
+
+### Nested Layouts
+
+Layouts can be nested:
+
+```tsx
+// app/blog/layout.tsx
+export default function BlogLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div>
+      <h1>Blog</h1>
+      <nav>
+        <a href="/blog">All Posts</a>
+        <a href="/blog/categories">Categories</a>
+      </nav>
+      {children}
+    </div>
+  )
+}
+```
+
+## Server Components vs Client Components
+
+### Server Components (Default)
+
+Server Components run on the server and can directly access databases and APIs:
+
+```tsx
+// app/posts/page.tsx
+async function getPosts() {
+  const res = await fetch('https://api.example.com/posts')
+  return res.json()
+}
+
+export default async function PostsPage() {
+  const posts = await getPosts()
+  
+  return (
+    <div>
+      {posts.map(post => (
+        <article key={post.id}>
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+```
+
+### Client Components
+
+Use `'use client'` directive for interactivity:
+
+```tsx
+// app/components/Counter.tsx
+'use client'
+
+import { useState } from 'react'
+
+export default function Counter() {
+  const [count, setCount] = useState(0)
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  )
+}
+```
+
+## Data Fetching
+
+### Server Components
+
+Fetch data directly in Server Components:
+
+```tsx
+// app/products/page.tsx
+async function getProducts() {
+  // This runs on the server
+  const res = await fetch('https://api.example.com/products', {
+    cache: 'no-store' // Always fetch fresh data
+  })
+  return res.json()
+}
+
+export default async function ProductsPage() {
+  const products = await getProducts()
+  
+  return (
+    <div>
+      {products.map(product => (
+        <div key={product.id}>{product.name}</div>
+      ))}
+    </div>
+  )
+}
+```
+
+### Caching Strategies
+
+```tsx
+// Force dynamic (no cache)
+fetch(url, { cache: 'no-store' })
+
+// Revalidate every 60 seconds
+fetch(url, { next: { revalidate: 60 } })
+
+// Static generation (default)
+fetch(url) // Cached indefinitely
+```
+
+### Loading Data
+
+Use `loading.tsx` for loading states:
+
+```tsx
+// app/products/loading.tsx
+export default function Loading() {
+  return <div>Loading products...</div>
+}
+```
+
+## Route Handlers (API Routes)
+
+Create API routes with `route.ts`:
+
+```tsx
+// app/api/users/route.ts
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const users = await getUsers()
+  return NextResponse.json(users)
+}
+
+export async function POST(request: Request) {
+  const body = await request.json()
+  const user = await createUser(body)
+  return NextResponse.json(user, { status: 201 })
+}
+```
+
+## Metadata and SEO
+
+Use the `metadata` export for SEO:
+
+```tsx
+// app/blog/[slug]/page.tsx
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug)
+  
+  return {
+    title: post.title,
+    description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      images: [post.image],
+    },
+  }
+}
+
+export default async function BlogPost({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug)
+  return <article>{/* post content */}</article>
+}
+```
+
+## Error Handling
+
+Use `error.tsx` for error boundaries:
+
+```tsx
+// app/products/error.tsx
+'use client'
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <button onClick={() => reset()}>Try again</button>
+    </div>
+  )
+}
+```
+
+## Route Groups
+
+Use parentheses for route groups (doesn't affect URL):
+
+```tsx
+// app/(marketing)/layout.tsx
+export default function MarketingLayout({ children }) {
+  return (
+    <div className="marketing-theme">
+      {children}
+    </div>
+  )
+}
+
+// app/(marketing)/about/page.tsx
+// URL is still /about, not /marketing/about
+```
+
+## Parallel Routes
+
+Use `@folder` syntax for parallel routes:
+
+```
+app/
+├── layout.tsx
+├── @analytics/
+│   └── page.tsx
+├── @team/
+│   └── page.tsx
+└── dashboard/
+    └── page.tsx
+```
+
+## Practical Example: Blog
+
+Here's a complete blog example:
+
+```tsx
+// app/blog/layout.tsx
+export default function BlogLayout({ children }) {
+  return (
+    <div className="blog-container">
+      <aside>Blog sidebar</aside>
+      <main>{children}</main>
+    </div>
+  )
+}
+
+// app/blog/page.tsx
+async function getPosts() {
+  const res = await fetch('https://api.example.com/posts')
+  return res.json()
+}
+
+export default async function BlogPage() {
+  const posts = await getPosts()
+  
+  return (
+    <div>
+      <h1>Blog</h1>
+      {posts.map(post => (
+        <article key={post.id}>
+          <h2>{post.title}</h2>
+          <p>{post.excerpt}</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+// app/blog/[slug]/page.tsx
+async function getPost(slug: string) {
+  const res = await fetch(`https://api.example.com/posts/${slug}`)
+  return res.json()
+}
+
+export async function generateMetadata({ params }) {
+  const post = await getPost(params.slug)
+  return {
+    title: post.title,
+    description: post.description,
+  }
+}
+
+export default async function BlogPost({ params }) {
+  const post = await getPost(params.slug)
+  
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div dangerouslySetInnerHTML={{ __html: post.content }} />
+    </article>
+  )
+}
+```
+
+## Migration from Pages Router
+
+If migrating an existing app:
+
+1. Create `app` directory alongside `pages`
+2. Move routes one by one
+3. Convert `getServerSideProps` to Server Components
+4. Convert `getStaticProps` to static Server Components
+5. Update API routes to `route.ts`
+6. Test thoroughly
+
+## Best Practices
+
+1. **Use Server Components by default**: Only use Client Components when needed
+2. **Leverage layouts**: Reduce code duplication
+3. **Use loading states**: Improve perceived performance
+4. **Implement error boundaries**: Better error handling
+5. **Optimize metadata**: Better SEO
+6. **Cache appropriately**: Balance freshness and performance
+
+## Conclusion
+
+The App Router represents the future of Next.js. It offers better performance through Server Components, improved developer experience with layouts and loading states, and more flexible routing options. While it requires learning new patterns, the benefits are significant.
+
+Start with simple pages and gradually adopt more advanced features like nested layouts, parallel routes, and server components. The App Router's file-based routing makes it intuitive once you understand the conventions.

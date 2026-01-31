@@ -1,0 +1,242 @@
+---
+title: How to Deploy a Next.js Site on Vercel (Step-by-Step)
+date: 2024-01-15
+description: A complete guide to deploying your Next.js application on Vercel, including setup, configuration, and best practices for production deployment.
+tags: ['Next.js', 'Deployment', 'Vercel', 'Web Development']
+excerpt: Learn how to deploy your Next.js application to Vercel in minutes. This step-by-step guide covers everything from initial setup to production deployment.
+---
+
+Deploying a Next.js application can seem daunting at first, but with Vercel, it's actually one of the simplest deployment processes you'll encounter. Vercel is built by the same team that created Next.js, so the integration is seamless. In this guide, I'll walk you through deploying your Next.js site to Vercel step by step.
+
+## Why Choose Vercel for Next.js?
+
+Vercel is the recommended hosting platform for Next.js applications. It offers several advantages:
+
+- **Zero Configuration**: Vercel automatically detects Next.js projects and configures them optimally
+- **Edge Network**: Your site is served from a global CDN, ensuring fast load times worldwide
+- **Automatic HTTPS**: SSL certificates are provisioned and renewed automatically
+- **Preview Deployments**: Every push to your repository gets a unique preview URL
+- **Serverless Functions**: Built-in support for API routes and serverless functions
+- **Free Tier**: Generous free tier perfect for personal projects and small businesses
+
+## Prerequisites
+
+Before we begin, make sure you have:
+
+1. A Next.js project ready to deploy (or create a new one)
+2. A GitHub, GitLab, or Bitbucket account
+3. Your code pushed to a Git repository
+
+## Step 1: Prepare Your Next.js Project
+
+First, ensure your Next.js project is ready for production:
+
+### Check Your package.json
+
+Make sure your `package.json` includes the necessary scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+}
+```
+
+### Environment Variables
+
+If your project uses environment variables, create a `.env.local` file for local development. For Vercel, you'll add these through the dashboard later. Common variables include:
+
+- API keys
+- Database connection strings
+- Third-party service credentials
+
+### Test Your Build Locally
+
+Before deploying, test that your project builds successfully:
+
+```bash
+npm run build
+```
+
+If the build succeeds, you're ready to deploy!
+
+## Step 2: Create a Vercel Account
+
+1. Go to [vercel.com](https://vercel.com)
+2. Click "Sign Up"
+3. Choose to sign up with GitHub, GitLab, or Bitbucket (recommended for easy integration)
+
+## Step 3: Import Your Project
+
+Once logged in to Vercel:
+
+1. Click "Add New Project"
+2. Import your Git repository
+3. Vercel will automatically detect it's a Next.js project
+
+## Step 4: Configure Your Project
+
+Vercel will show you a configuration screen. Most settings are auto-detected, but you can adjust:
+
+### Framework Preset
+- Should be automatically set to "Next.js"
+
+### Root Directory
+- Leave as "." unless your Next.js app is in a subdirectory
+
+### Build Command
+- Default: `npm run build` (or `next build`)
+- Usually doesn't need to be changed
+
+### Output Directory
+- Leave empty for Next.js (it uses `.next` automatically)
+
+### Install Command
+- Default: `npm install` (or `yarn install`, `pnpm install`)
+
+## Step 5: Add Environment Variables
+
+If your project uses environment variables:
+
+1. In the project configuration, scroll to "Environment Variables"
+2. Add each variable with its value
+3. You can set different values for Production, Preview, and Development environments
+
+Common environment variables for Next.js:
+- `NEXT_PUBLIC_*` - Variables exposed to the browser
+- `DATABASE_URL` - Database connection string
+- `API_KEY` - Third-party API keys
+
+## Step 6: Deploy
+
+Click "Deploy" and watch the magic happen! Vercel will:
+
+1. Install your dependencies
+2. Run the build command
+3. Deploy your site to their edge network
+4. Provide you with a production URL
+
+The first deployment usually takes 2-3 minutes. Subsequent deployments are much faster.
+
+## Step 7: Custom Domain (Optional)
+
+To use your own domain:
+
+1. Go to your project settings
+2. Navigate to "Domains"
+3. Add your domain name
+4. Follow the DNS configuration instructions
+5. Vercel will automatically provision SSL certificates
+
+## Understanding Vercel Deployments
+
+### Production Deployments
+
+- Triggered by pushes to your main/master branch
+- Uses your production environment variables
+- Gets your custom domain (if configured)
+
+### Preview Deployments
+
+- Created for every push to other branches
+- Each pull request gets its own preview URL
+- Perfect for testing before merging
+
+### Development Deployments
+
+- Can be triggered manually
+- Uses development environment variables
+
+## Best Practices
+
+### 1. Optimize Your Images
+
+Use Next.js Image component for automatic optimization:
+
+```jsx
+import Image from 'next/image'
+
+<Image
+  src="/your-image.jpg"
+  alt="Description"
+  width={800}
+  height={600}
+/>
+```
+
+### 2. Use Environment Variables Wisely
+
+- Never commit `.env.local` to Git
+- Use `NEXT_PUBLIC_` prefix only for variables needed in the browser
+- Keep sensitive variables server-side only
+
+### 3. Monitor Performance
+
+Vercel provides built-in analytics:
+- Web Vitals metrics
+- Real User Monitoring (RUM)
+- Performance insights
+
+### 4. Set Up Continuous Deployment
+
+Once connected to Git, every push automatically triggers a deployment. This enables:
+- Fast iteration cycles
+- Easy rollbacks (redeploy previous version)
+- Preview URLs for every change
+
+## Troubleshooting Common Issues
+
+### Build Fails
+
+- Check build logs in Vercel dashboard
+- Ensure all dependencies are in `package.json`
+- Verify Node.js version compatibility
+
+### Environment Variables Not Working
+
+- Make sure variables are added in Vercel dashboard
+- Redeploy after adding new variables
+- Check variable names match exactly (case-sensitive)
+
+### Slow Build Times
+
+- Optimize your dependencies
+- Use `.vercelignore` to exclude unnecessary files
+- Consider using Vercel's build cache
+
+## Advanced Configuration
+
+### vercel.json
+
+For advanced configuration, create a `vercel.json` file:
+
+```json
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Conclusion
+
+Deploying a Next.js application to Vercel is straightforward and takes just a few minutes. The platform handles all the complex infrastructure, allowing you to focus on building great applications. With automatic deployments, preview URLs, and a generous free tier, Vercel is an excellent choice for Next.js projects of any size.
+
+Remember to test your build locally before deploying, configure your environment variables correctly, and take advantage of preview deployments to test changes before they go live. Happy deploying!

@@ -1,0 +1,463 @@
+---
+title: TypeScript Tips for Better Code Quality
+date: 2024-02-25
+description: Practical TypeScript tips and patterns to write better, more maintainable code. Learn advanced types, utility types, and best practices.
+tags: ['TypeScript', 'Programming', 'Best Practices', 'Web Development']
+excerpt: Improve your TypeScript code quality with these practical tips. From utility types to advanced patterns and best practices for maintainable code.
+---
+
+TypeScript adds type safety to JavaScript, but writing good TypeScript requires understanding its features and best practices. This article covers practical tips to improve your TypeScript code quality.
+
+## Why TypeScript Matters
+
+TypeScript helps you:
+- Catch errors before runtime
+- Improve code maintainability
+- Enhance IDE support
+- Document code through types
+- Refactor with confidence
+
+## 1. Use Strict Mode
+
+Enable strict mode in `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true
+  }
+}
+```
+
+Strict mode catches more errors and enforces better practices.
+
+## 2. Leverage Utility Types
+
+TypeScript provides powerful utility types:
+
+### Partial<T>
+
+Make all properties optional:
+
+```typescript
+interface User {
+  name: string
+  email: string
+  age: number
+}
+
+type PartialUser = Partial<User>
+// { name?: string; email?: string; age?: number }
+```
+
+### Required<T>
+
+Make all properties required:
+
+```typescript
+type RequiredUser = Required<PartialUser>
+// { name: string; email: string; age: number }
+```
+
+### Pick<T, K>
+
+Select specific properties:
+
+```typescript
+type UserName = Pick<User, 'name' | 'email'>
+// { name: string; email: string }
+```
+
+### Omit<T, K>
+
+Exclude specific properties:
+
+```typescript
+type UserWithoutAge = Omit<User, 'age'>
+// { name: string; email: string }
+```
+
+### Record<K, V>
+
+Create object types:
+
+```typescript
+type UserRoles = Record<string, boolean>
+// { [key: string]: boolean }
+```
+
+## 3. Use Discriminated Unions
+
+For better type narrowing:
+
+```typescript
+type Result<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
+function handleResult(result: Result<User>) {
+  if (result.success) {
+    // TypeScript knows result.data exists
+    console.log(result.data)
+  } else {
+    // TypeScript knows result.error exists
+    console.error(result.error)
+  }
+}
+```
+
+## 4. Avoid `any`, Use `unknown`
+
+### The Problem with `any`
+
+```typescript
+// ❌ Bad
+function processData(data: any) {
+  return data.someProperty.toUpperCase()
+}
+```
+
+### Use `unknown` Instead
+
+```typescript
+// ✅ Good
+function processData(data: unknown) {
+  if (typeof data === 'object' && data !== null && 'someProperty' in data) {
+    const obj = data as { someProperty: string }
+    return obj.someProperty.toUpperCase()
+  }
+  throw new Error('Invalid data')
+}
+```
+
+## 5. Use Type Guards
+
+Create reusable type guards:
+
+```typescript
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
+
+function isUser(obj: unknown): obj is User {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'name' in obj &&
+    'email' in obj &&
+    typeof (obj as any).name === 'string' &&
+    typeof (obj as any).email === 'string'
+  )
+}
+
+// Usage
+function process(value: unknown) {
+  if (isString(value)) {
+    // TypeScript knows value is string
+    console.log(value.toUpperCase())
+  }
+}
+```
+
+## 6. Use `const` Assertions
+
+Preserve literal types:
+
+```typescript
+// Without const assertion
+const colors = ['red', 'green', 'blue']
+// Type: string[]
+
+// With const assertion
+const colors = ['red', 'green', 'blue'] as const
+// Type: readonly ["red", "green", "blue"]
+
+// Useful for configuration
+const config = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000,
+} as const
+```
+
+## 7. Prefer Interfaces for Objects, Types for Unions
+
+### Interfaces for Objects
+
+```typescript
+interface User {
+  name: string
+  email: string
+}
+
+// Can be extended
+interface AdminUser extends User {
+  permissions: string[]
+}
+```
+
+### Types for Unions and Intersections
+
+```typescript
+type Status = 'pending' | 'approved' | 'rejected'
+
+type UserWithStatus = User & { status: Status }
+```
+
+## 8. Use Generic Constraints
+
+Constrain generic types:
+
+```typescript
+// Without constraint
+function getProperty<T>(obj: T, key: string) {
+  return obj[key] // Error: can't index T
+}
+
+// With constraint
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key] // Works!
+}
+
+// Usage
+const user = { name: 'John', age: 30 }
+const name = getProperty(user, 'name') // Type: string
+```
+
+## 9. Use Mapped Types
+
+Transform types dynamically:
+
+```typescript
+type Readonly<T> = {
+  readonly [P in keyof T]: T[P]
+}
+
+type Optional<T> = {
+  [P in keyof T]?: T[P]
+}
+
+type Nullable<T> = {
+  [P in keyof T]: T[P] | null
+}
+```
+
+## 10. Avoid Type Assertions When Possible
+
+### Prefer Type Guards
+
+```typescript
+// ❌ Bad - type assertion
+const user = data as User
+
+// ✅ Good - type guard
+if (isUser(data)) {
+  const user = data // TypeScript knows it's User
+}
+```
+
+## 11. Use Template Literal Types
+
+Create string literal types:
+
+```typescript
+type EventName<T extends string> = `on${Capitalize<T>}`
+
+type ClickEvent = EventName<'click'> // 'onClick'
+type ChangeEvent = EventName<'change'> // 'onChange'
+
+// Practical example
+type ApiEndpoint = `/api/${string}`
+const endpoint: ApiEndpoint = '/api/users' // ✅
+const invalid: ApiEndpoint = '/users' // ❌
+```
+
+## 12. Use `satisfies` Operator (TypeScript 4.9+)
+
+Check types without widening:
+
+```typescript
+// Without satisfies
+const config = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000,
+} // Type is inferred, might be too wide
+
+// With satisfies
+const config = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000,
+} satisfies Config // Checks type but preserves literal types
+```
+
+## 13. Organize Types and Interfaces
+
+Keep types organized:
+
+```typescript
+// types/user.ts
+export interface User {
+  id: string
+  name: string
+  email: string
+}
+
+export type UserRole = 'admin' | 'user' | 'guest'
+
+// types/api.ts
+export interface ApiResponse<T> {
+  data: T
+  status: number
+  message: string
+}
+```
+
+## 14. Use Enums Carefully
+
+Consider alternatives:
+
+```typescript
+// ❌ String enum (can be problematic)
+enum Status {
+  Pending = 'pending',
+  Approved = 'approved',
+}
+
+// ✅ Union type (preferred)
+type Status = 'pending' | 'approved'
+
+// Or const object
+const Status = {
+  Pending: 'pending',
+  Approved: 'approved',
+} as const
+
+type Status = typeof Status[keyof typeof Status]
+```
+
+## 15. Document Complex Types
+
+Add JSDoc comments:
+
+```typescript
+/**
+ * Represents a user in the system
+ * @property id - Unique identifier
+ * @property name - User's full name
+ * @property email - User's email address
+ */
+interface User {
+  id: string
+  name: string
+  email: string
+}
+```
+
+## 16. Use Branded Types
+
+Create distinct types from primitives:
+
+```typescript
+type UserId = string & { readonly brand: unique symbol }
+type ProductId = string & { readonly brand: unique symbol }
+
+function getUser(id: UserId): User {
+  // ...
+}
+
+// Prevents mixing types
+const userId = '123' as UserId
+const productId = '456' as ProductId
+
+getUser(userId) // ✅
+getUser(productId) // ❌ Error
+```
+
+## 17. Avoid Function Overloads When Possible
+
+Use union types instead:
+
+```typescript
+// ❌ Complex overloads
+function process(data: string): string
+function process(data: number): number
+function process(data: string | number): string | number {
+  // Implementation
+}
+
+// ✅ Simpler with generics
+function process<T extends string | number>(data: T): T {
+  // Implementation
+}
+```
+
+## 18. Use `as const` for Immutable Data
+
+```typescript
+// Without as const
+const routes = ['home', 'about', 'contact']
+// Type: string[]
+
+// With as const
+const routes = ['home', 'about', 'contact'] as const
+// Type: readonly ["home", "about", "contact"]
+```
+
+## 19. Leverage Type Inference
+
+Let TypeScript infer when possible:
+
+```typescript
+// ❌ Unnecessary type annotation
+const name: string = 'John'
+
+// ✅ Let TypeScript infer
+const name = 'John' // Type: "John" (literal type)
+```
+
+## 20. Use `never` for Exhaustiveness
+
+Ensure all cases are handled:
+
+```typescript
+type Status = 'pending' | 'approved' | 'rejected'
+
+function handleStatus(status: Status) {
+  switch (status) {
+    case 'pending':
+      return 'Processing...'
+    case 'approved':
+      return 'Approved!'
+    case 'rejected':
+      return 'Rejected'
+    default:
+      const exhaustive: never = status
+      return exhaustive
+  }
+}
+```
+
+## Best Practices Summary
+
+1. **Enable strict mode** for better type safety
+2. **Use utility types** to avoid repetition
+3. **Prefer type guards** over type assertions
+4. **Use `unknown` instead of `any`**
+5. **Leverage type inference** when possible
+6. **Document complex types** with JSDoc
+7. **Organize types** in separate files
+8. **Use discriminated unions** for better narrowing
+9. **Avoid function overloads** when generics work
+10. **Test your types** with real data
+
+## Conclusion
+
+TypeScript is powerful when used correctly. These tips will help you write more maintainable, type-safe code. Start with strict mode, learn utility types, and gradually adopt more advanced patterns as needed.
+
+Remember: TypeScript is a tool to help you write better code, not a goal in itself. Focus on solving problems, and let types guide you toward better solutions. Good types make code self-documenting and easier to maintain.

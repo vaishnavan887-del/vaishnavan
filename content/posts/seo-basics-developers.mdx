@@ -1,0 +1,356 @@
+---
+title: "SEO Basics for Developers: Practical Checklist"
+date: 2024-01-25
+description: A developer-focused guide to SEO fundamentals. Learn technical SEO, meta tags, structured data, and other essential optimization techniques.
+tags: ['SEO', 'Web Development', 'Next.js', 'Performance']
+excerpt: Master the fundamentals of SEO as a developer. This practical checklist covers everything from meta tags to structured data and performance optimization.
+---
+
+Search Engine Optimization (SEO) might seem like a marketing concern, but as a developer, you play a crucial role in making websites discoverable. Technical SEO is entirely in your hands, and getting it right can significantly impact your site's visibility. This guide provides a practical checklist of SEO basics every developer should know.
+
+## Why Developers Should Care About SEO
+
+- **Better User Experience**: SEO best practices often align with good UX
+- **Career Growth**: SEO knowledge makes you more valuable
+- **Client Satisfaction**: Better rankings = happier clients
+- **Personal Projects**: Help your own projects get discovered
+
+## 1. Meta Tags and Document Structure
+
+### Title Tags
+
+The title tag is one of the most important SEO elements:
+
+```html
+<!-- Good -->
+<title>How to Learn React in 2024 | Developer Blog</title>
+
+<!-- Bad -->
+<title>Home</title>
+```
+
+**Best Practices:**
+- Keep under 60 characters
+- Include primary keyword near the beginning
+- Make it descriptive and compelling
+- Unique for each page
+
+### Meta Descriptions
+
+While not a direct ranking factor, descriptions influence click-through rates:
+
+```html
+<meta 
+  name="description" 
+  content="Learn React from scratch with this comprehensive guide. Includes examples, best practices, and real-world projects."
+/>
+```
+
+**Best Practices:**
+- 150-160 characters
+- Include a call to action
+- Make it compelling
+- Unique for each page
+
+### Open Graph Tags
+
+For better social media sharing:
+
+```html
+<meta property="og:title" content="How to Learn React in 2024" />
+<meta property="og:description" content="Comprehensive React tutorial..." />
+<meta property="og:image" content="https://yoursite.com/og-image.jpg" />
+<meta property="og:url" content="https://yoursite.com/article" />
+<meta property="og:type" content="article" />
+```
+
+## 2. Semantic HTML
+
+Use semantic HTML elements for better SEO and accessibility:
+
+```html
+<!-- Good -->
+<article>
+  <header>
+    <h1>Article Title</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Section Title</h2>
+      <p>Content...</p>
+    </section>
+  </main>
+  <footer>Footer content</footer>
+</article>
+
+<!-- Bad -->
+<div>
+  <div>Article Title</div>
+  <div>Content...</div>
+</div>
+```
+
+**Benefits:**
+- Search engines understand content structure
+- Better accessibility
+- Cleaner, more maintainable code
+
+## 3. Heading Hierarchy
+
+Use headings logically (H1 → H2 → H3):
+
+```html
+<h1>Main Page Title</h1>
+  <h2>Section Title</h2>
+    <h3>Subsection Title</h3>
+      <h4>Sub-subsection</h4>
+```
+
+**Rules:**
+- One H1 per page
+- Don't skip heading levels
+- Use headings for structure, not styling
+
+## 4. URL Structure
+
+Clean, descriptive URLs help SEO:
+
+```
+✅ Good: /blog/react-performance-tips
+❌ Bad: /blog/post?id=123
+❌ Bad: /blog/post-1
+```
+
+**Best Practices:**
+- Use hyphens, not underscores
+- Keep URLs short and descriptive
+- Include keywords when natural
+- Use lowercase
+- Avoid unnecessary parameters
+
+## 5. Image Optimization
+
+Images need proper optimization and alt text:
+
+```html
+<img 
+  src="optimized-image.webp" 
+  alt="Developer working on React project"
+  width="800"
+  height="600"
+  loading="lazy"
+/>
+```
+
+**Checklist:**
+- Descriptive alt text (not "image1.jpg")
+- Appropriate file formats (WebP, AVIF)
+- Proper sizing (don't scale down large images)
+- Lazy loading for below-fold images
+- Responsive images with srcset
+
+## 6. Internal Linking
+
+Link to other pages on your site:
+
+```html
+<a href="/blog/nextjs-tips">Learn more about Next.js</a>
+```
+
+**Benefits:**
+- Helps search engines discover pages
+- Distributes page authority
+- Improves user navigation
+- Reduces bounce rate
+
+## 7. Mobile Responsiveness
+
+Mobile-first is essential:
+
+- Use responsive design
+- Test on real devices
+- Ensure touch targets are adequate
+- Avoid Flash and other unsupported technologies
+
+Google uses mobile-first indexing, so mobile experience directly impacts rankings.
+
+## 8. Page Speed
+
+Fast pages rank better and provide better UX:
+
+**Key Metrics:**
+- **LCP (Largest Contentful Paint)**: < 2.5s
+- **FID (First Input Delay)**: < 100ms
+- **CLS (Cumulative Layout Shift)**: < 0.1
+
+**Optimization Techniques:**
+- Minimize JavaScript
+- Optimize images
+- Use CDN
+- Enable compression (Gzip/Brotli)
+- Minimize render-blocking resources
+- Use browser caching
+
+## 9. Structured Data (Schema.org)
+
+Help search engines understand your content:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to Learn React",
+  "author": {
+    "@type": "Person",
+    "name": "Vaishnavan"
+  },
+  "datePublished": "2024-01-25",
+  "description": "Comprehensive guide to learning React..."
+}
+```
+
+**Common Types:**
+- Article
+- Organization
+- BreadcrumbList
+- FAQPage
+- Product
+
+## 10. robots.txt
+
+Control what search engines can crawl:
+
+```
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://yoursite.com/sitemap.xml
+```
+
+## 11. XML Sitemap
+
+Help search engines discover all your pages:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://yoursite.com/</loc>
+    <lastmod>2024-01-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+```
+
+Submit to Google Search Console and Bing Webmaster Tools.
+
+## 12. HTTPS
+
+HTTPS is required for good SEO:
+
+- Google marks HTTP sites as "not secure"
+- HTTPS is a ranking signal
+- Required for many modern web features
+- Better user trust
+
+## 13. Canonical URLs
+
+Prevent duplicate content issues:
+
+```html
+<link rel="canonical" href="https://yoursite.com/blog/article" />
+```
+
+Use when:
+- You have multiple URLs for the same content
+- Using URL parameters
+- Having both www and non-www versions
+
+## 14. 404 Pages
+
+Create helpful 404 pages:
+
+- Don't just show "Page Not Found"
+- Include navigation
+- Suggest popular content
+- Make it searchable
+- Keep it on-brand
+
+## 15. Analytics and Search Console
+
+Set up tracking:
+
+- **Google Analytics**: User behavior
+- **Google Search Console**: Search performance, indexing issues
+- **Bing Webmaster Tools**: Additional insights
+
+## Next.js Specific SEO
+
+If using Next.js:
+
+```jsx
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Page Title',
+  description: 'Page description',
+  openGraph: {
+    title: 'Page Title',
+    description: 'Page description',
+    images: ['/og-image.jpg'],
+  },
+}
+```
+
+Next.js handles:
+- Automatic sitemap generation
+- robots.txt generation
+- Optimized images
+- Automatic code splitting
+
+## Testing Your SEO
+
+Use these tools:
+
+- **Google Search Console**: Monitor search performance
+- **Lighthouse**: SEO audit
+- **PageSpeed Insights**: Performance and SEO
+- **Schema Markup Validator**: Test structured data
+- **Mobile-Friendly Test**: Check mobile usability
+
+## Common Mistakes to Avoid
+
+1. **Keyword Stuffing**: Natural language is better
+2. **Duplicate Content**: Use canonical tags
+3. **Ignoring Mobile**: Mobile-first is essential
+4. **Slow Pages**: Speed matters
+5. **Missing Alt Text**: Images need descriptions
+6. **Broken Links**: Regular audits needed
+7. **Thin Content**: Provide substantial, valuable content
+
+## SEO Checklist
+
+Before launching, verify:
+
+- [ ] Unique title tags on all pages
+- [ ] Meta descriptions for all pages
+- [ ] Proper heading hierarchy
+- [ ] Alt text on all images
+- [ ] Mobile responsive
+- [ ] Fast page load times
+- [ ] HTTPS enabled
+- [ ] XML sitemap created
+- [ ] robots.txt configured
+- [ ] Structured data implemented
+- [ ] Internal linking structure
+- [ ] Analytics set up
+- [ ] Search Console verified
+
+## Conclusion
+
+SEO is an ongoing process, not a one-time setup. Start with these fundamentals, measure your results, and iterate. As a developer, you have the power to implement technical SEO correctly from the start, giving your projects the best chance to be discovered.
+
+Remember: good SEO is about providing value to users. If you create great content and make it technically sound, search engines will reward you. Focus on user experience first, and SEO will follow.

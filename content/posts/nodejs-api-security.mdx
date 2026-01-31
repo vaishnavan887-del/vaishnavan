@@ -1,0 +1,431 @@
+---
+title: "Node.js API Security: 10 Common Mistakes"
+date: 2024-02-10
+description: Learn about common security vulnerabilities in Node.js APIs and how to prevent them. Essential security practices for backend developers.
+tags: ['Node.js', 'Security', 'API', 'Backend']
+excerpt: Discover the most common security mistakes in Node.js APIs and learn how to fix them. From authentication to input validation and beyond.
+---
+
+Security is crucial for any API, and Node.js applications are no exception. Many security vulnerabilities stem from common mistakes that are easily preventable. This article covers 10 frequent security issues in Node.js APIs and how to avoid them.
+
+## Why API Security Matters
+
+APIs are prime targets for attackers because they:
+- Handle sensitive data
+- Are accessible over the internet
+- Often lack proper authentication
+- May expose business logic
+
+A single vulnerability can compromise your entire application and user data.
+
+## 1. Missing Input Validation
+
+**The Problem:**
+Accepting user input without validation allows attackers to inject malicious data, cause errors, or exploit business logic flaws.
+
+**Example of Bad Code:**
+```javascript
+app.post('/api/users', (req, res) => {
+  const { email, age } = req.body
+  // No validation - dangerous!
+  db.users.create({ email, age })
+  res.json({ success: true })
+})
+```
+
+**The Fix:**
+```javascript
+const { body, validationResult } = require('express-validator')
+
+app.post('/api/users',
+  body('email').isEmail().normalizeEmail(),
+  body('age').isInt({ min: 0, max: 120 }),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    // Safe to use validated data
+    db.users.create(req.body)
+    res.json({ success: true })
+  }
+)
+```
+
+**Best Practices:**
+- Validate all input (body, query, params, headers)
+- Use validation libraries (express-validator, joi, yup)
+- Sanitize data before storing
+- Validate data types and ranges
+
+## 2. SQL/NoSQL Injection
+
+**The Problem:**
+Concatenating user input into database queries allows attackers to execute arbitrary queries.
+
+**Example of Bad Code:**
+```javascript
+// SQL Injection
+app.get('/api/users', (req, res) => {
+  const query = `SELECT * FROM users WHERE email = '${req.query.email}'`
+  db.query(query, (err, results) => {
+    res.json(results)
+  })
+})
+
+// NoSQL Injection
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body
+  User.findOne({ username, password }, (err, user) => {
+    // Attacker can send: { username: "admin", password: { $ne: null } }
+  })
+})
+```
+
+**The Fix:**
+```javascript
+// Use parameterized queries
+app.get('/api/users', (req, res) => {
+  db.query('SELECT * FROM users WHERE email = ?', [req.query.email], (err, results) => {
+    res.json(results)
+  })
+})
+
+// Validate and sanitize for NoSQL
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body
+  
+  // Validate types
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Invalid input' })
+  }
+  
+  User.findOne({ 
+    username: username.trim(), 
+    password: hashPassword(password) 
+  }, (err, user) => {
+    // Safe query
+  })
+})
+```
+
+## 3. Weak Authentication
+
+**The Problem:**
+Poor authentication allows unauthorized access to protected resources.
+
+**Common Mistakes:**
+- Storing passwords in plain text
+- Weak password requirements
+- No rate limiting on login
+- Predictable session tokens
+- Missing multi-factor authentication
+
+**The Fix:**
+```javascript
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const rateLimit = require('express-rate-limit')
+
+// Rate limiting
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5 // 5 attempts
+})
+
+// Password hashing
+async function hashPassword(password) {
+  const saltRounds = 10
+  return await bcrypt.hash(password, saltRounds)
+}
+
+// JWT authentication
+function generateToken(user) {
+  return jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  )
+}
+
+app.post('/api/login', loginLimiter, async (req, res) => {
+  const { email, password } = req.body
+  
+  const user = await User.findOne({ email })
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' })
+  }
+  
+  const valid = await bcrypt.compare(password, user.passwordHash)
+  if (!valid) {
+    return res.status(401).json({ error: 'Invalid credentials' })
+  }
+  
+  const token = generateToken(user)
+  res.json({ token })
+})
+```
+
+## 4. Exposed Sensitive Data
+
+**The Problem:**
+APIs often return more data than necessary, exposing sensitive information.
+
+**Example of Bad Code:**
+```javascript
+app.get('/api/users/:id', (req, res) => {
+  User.findById(req.params.id, (err, user) => {
+    res.json(user) // Returns password hash, internal IDs, etc.
+  })
+})
+```
+
+**The Fix:**
+```javascript
+app.get('/api/users/:id', (req, res) => {
+  User.findById(req.params.id, (err, user) => {
+    if (err || !user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    
+    // Only return safe fields
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt
+      // Exclude: passwordHash, internalId, adminFlag, etc.
+    })
+  })
+})
+```
+
+## 5. Missing HTTPS
+
+**The Problem:**
+HTTP transmits data in plain text, allowing attackers to intercept sensitive information.
+
+**The Fix:**
+- Always use HTTPS in production
+- Redirect HTTP to HTTPS
+- Use HSTS headers
+- Validate SSL certificates
+
+```javascript
+// Force HTTPS
+app.use((req, res, next) => {
+  if (req.header('x-forwarded-proto') !== 'https' && process.env.NODE_ENV === 'production') {
+    res.redirect(`https://${req.header('host')}${req.url}`)
+  } else {
+    next()
+  }
+})
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('X-XSS-Protection', '1; mode=block')
+  next()
+})
+```
+
+## 6. Insecure Dependencies
+
+**The Problem:**
+Outdated or vulnerable packages can introduce security flaws.
+
+**The Fix:**
+```bash
+# Regularly update dependencies
+npm audit
+npm audit fix
+
+# Use tools like:
+# - Snyk
+# - Dependabot
+# - npm-check-updates
+```
+
+```javascript
+// package.json scripts
+{
+  "scripts": {
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix",
+    "check-updates": "ncu -u"
+  }
+}
+```
+
+## 7. Missing Rate Limiting
+
+**The Problem:**
+Without rate limiting, APIs are vulnerable to abuse, DDoS attacks, and brute force attempts.
+
+**The Fix:**
+```javascript
+const rateLimit = require('express-rate-limit')
+
+// General API rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // 100 requests per window
+})
+
+app.use('/api/', apiLimiter)
+
+// Stricter limits for sensitive endpoints
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many requests, please try again later'
+})
+
+app.use('/api/login', strictLimiter)
+app.use('/api/register', strictLimiter)
+```
+
+## 8. Insufficient Error Handling
+
+**The Problem:**
+Detailed error messages can reveal system internals, database structure, or file paths.
+
+**Example of Bad Code:**
+```javascript
+app.get('/api/users/:id', (req, res) => {
+  User.findById(req.params.id, (err, user) => {
+    if (err) {
+      res.status(500).json({ error: err.message }) // Exposes internal details
+    }
+    res.json(user)
+  })
+})
+```
+
+**The Fix:**
+```javascript
+app.get('/api/users/:id', (req, res) => {
+  User.findById(req.params.id, (err, user) => {
+    if (err) {
+      // Log detailed error server-side
+      console.error('Database error:', err)
+      // Return generic message to client
+      return res.status(500).json({ error: 'Internal server error' })
+    }
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    res.json(user)
+  })
+})
+```
+
+## 9. Missing CORS Configuration
+
+**The Problem:**
+Improper CORS settings can allow unauthorized domains to access your API.
+
+**The Fix:**
+```javascript
+const cors = require('cors')
+
+// Restrictive CORS
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['https://yourdomain.com'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
+
+// Or for specific routes
+app.use('/api/', cors({
+  origin: 'https://yourdomain.com'
+}))
+```
+
+## 10. Insecure File Uploads
+
+**The Problem:**
+File uploads without proper validation can lead to malicious file execution or storage attacks.
+
+**The Fix:**
+```javascript
+const multer = require('multer')
+const path = require('path')
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/')
+  },
+  filename: (req, file, cb) => {
+    // Generate safe filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    const ext = path.extname(file.originalname)
+    cb(null, `file-${uniqueSuffix}${ext}`)
+  }
+})
+
+// File filter
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|pdf/
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+  const mimetype = allowedTypes.test(file.mimetype)
+  
+  if (mimetype && extname) {
+    return cb(null, true)
+  } else {
+    cb(new Error('Invalid file type'))
+  }
+}
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: fileFilter
+})
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  // Additional validation
+  // Scan for malware
+  // Store in secure location
+  res.json({ success: true, file: req.file.filename })
+})
+```
+
+## Security Checklist
+
+Before deploying your API:
+
+- [ ] Input validation on all endpoints
+- [ ] Parameterized database queries
+- [ ] Strong password hashing (bcrypt, argon2)
+- [ ] JWT tokens with expiration
+- [ ] Rate limiting implemented
+- [ ] HTTPS enforced
+- [ ] Security headers set
+- [ ] Error messages don't expose internals
+- [ ] CORS properly configured
+- [ ] Dependencies up to date
+- [ ] Environment variables secured
+- [ ] File uploads validated
+- [ ] Authentication required for protected routes
+- [ ] Regular security audits
+
+## Additional Security Measures
+
+- **Helmet.js**: Security headers middleware
+- **express-validator**: Input validation
+- **jsonwebtoken**: Secure token generation
+- **bcrypt**: Password hashing
+- **express-rate-limit**: Rate limiting
+- **helmet**: Security headers
+- **cors**: CORS configuration
+
+## Conclusion
+
+API security requires constant vigilance. These 10 common mistakes are just the beginning. Always validate input, use parameterized queries, implement proper authentication, and keep dependencies updated. Regular security audits and staying informed about new vulnerabilities are essential for maintaining a secure API.
+
+Remember: Security is not a one-time setup but an ongoing process. Regularly review your code, update dependencies, and test for vulnerabilities. When in doubt, err on the side of caution and implement additional security measures.
