@@ -7,7 +7,11 @@ import Footer from '@/components/Footer'
 import CookieBanner from '@/components/CookieBanner'
 import { generateOrganizationStructuredData } from '@/lib/metadata'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+})
 
 export const metadata: Metadata = {
   title: {
