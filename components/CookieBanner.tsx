@@ -30,7 +30,7 @@ export default function CookieBanner() {
   if (!showBanner) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white p-4 shadow-lg dark:bg-gray-900 md:left-auto md:right-4 md:bottom-4 md:max-w-md md:rounded-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white p-4 shadow-lg dark:bg-gray-900 md:left-auto md:right-4 md:bottom-4 md:max-w-md md:rounded-lg" style={{ willChange: 'transform' }}>
       <div className="flex flex-col space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

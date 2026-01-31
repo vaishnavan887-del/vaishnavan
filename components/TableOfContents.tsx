@@ -69,6 +69,7 @@ export default function TableOfContents({ content }: TableOfContentsProps) {
           <li key={heading.id}>
             <a
               href={`#${heading.id}`}
+              aria-label={`Jump to section: ${heading.text}`}
               className={`block text-sm transition-colors ${
                 heading.level === 1
                   ? 'font-semibold text-gray-900 dark:text-white'
